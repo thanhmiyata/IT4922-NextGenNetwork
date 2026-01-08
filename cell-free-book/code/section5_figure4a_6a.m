@@ -43,6 +43,11 @@ tau_p = 10;
 ASD_varphi = deg2rad(15);  %azimuth angle
 ASD_theta = deg2rad(15);   %elevation angle
 
+%% Parameters for proposed DCC scheme (threshold + load balancing)
+threshold_ratio = 0.1;  % 10% of max gain per UE
+L_max = 8;              % Max number of UEs per AP
+N_min = 3;              % Min number of APs per UE
+
 %% Propagation parameters
 
 %Total uplink transmit power per UE (mW)
@@ -54,6 +59,10 @@ SE_MMSE_DCC = zeros(K,nbrOfSetups); %MMSE (DCC)
 SE_PMMSE_DCC = zeros(K,nbrOfSetups); %P-MMSE(DCC)
 SE_PRZF_DCC = zeros(K,nbrOfSetups); %P-RZF (DCC)
 SE_MR_DCC = zeros(K,nbrOfSetups); %MR (DCC)
+
+% Proposed DCC (threshold + load balancing)
+SE_PMMSE_PROPOSED = zeros(K,nbrOfSetups);      %P-MMSE (Proposed DCC)
+SE_nopt_LPMMSE_PROPOSED = zeros(K,nbrOfSetups);%n-opt LSFD, LP-MMSE (Proposed DCC)
 
 SE_opt_LMMSE_original = zeros(K,nbrOfSetups); %opt LSFD, L-MMSE (All)
 SE_opt_LMMSE_DCC = zeros(K,nbrOfSetups); %opt LSFD, L-MMSE (DCC)
@@ -114,6 +123,25 @@ for n = 1:nbrOfSetups
     SE_opt_LMMSE_DCC(:,n) =  SE_opt_L_MMSE;
     SE_nopt_LPMMSE_DCC(:,n) =  SE_nopt_LP_MMSE;
     SE_nopt_MR_DCC(:,n) =  SE_nopt_MR;
+
+    %% Cell-Free Massive MIMO with proposed DCC (threshold + load balancing)
+    % Use large-scale fading (or gainOverNoisedB) of the single setup (n)
+    gainOverNoisedB_2D = gainOverNoisedB(:,:,1); % L x K
+    
+    % Generate DCC matrix according to proposed scheme
+    D_proposed = functionGenerateDCC_improved(gainOverNoisedB_2D, L, K, ...
+        threshold_ratio, L_max, N_min);
+    
+    % Compute SE for proposed DCC using the same functionComputeSE_uplink
+    [~, SE_P_MMSE_prop, ~, ~, ...
+        ~, SE_nopt_LP_MMSE_prop, ~, ...
+        ~, ~, ~, ...
+        ~, ~, ~, ~, ~, ~] ...
+        = functionComputeSE_uplink(Hhat,H,D_proposed,D_small,B,C,tau_c,...
+        tau_p,nbrOfRealizations,N,K,L,p,R,pilotIndex);
+    
+    SE_PMMSE_PROPOSED(:,n) = SE_P_MMSE_prop;
+    SE_nopt_LPMMSE_PROPOSED(:,n) = SE_nopt_LP_MMSE_prop;
     
     %Remove large matrices at the end of analyzing this setup
     clear Hhat H B C R;
@@ -130,12 +158,13 @@ set(gca,'fontsize',16);
 plot(sort(SE_MMSE_original(:)),linspace(0,1,K*nbrOfSetups),'k-','LineWidth',2);
 plot(sort(SE_MMSE_DCC(:)),linspace(0,1,K*nbrOfSetups),'r-.','LineWidth',2);
 plot(sort(SE_PMMSE_DCC(:)),linspace(0,1,K*nbrOfSetups),'k:','LineWidth',2);
+plot(sort(SE_PMMSE_PROPOSED(:)),linspace(0,1,K*nbrOfSetups),'g-','LineWidth',2);
 plot(sort(SE_PRZF_DCC(:)),linspace(0,1,K*nbrOfSetups),'b--','LineWidth',2);
 plot(sort(SE_MR_DCC(:)),linspace(0,1,K*nbrOfSetups),'k:','LineWidth',3);
 
 xlabel('Spectral efficiency [bit/s/Hz]','Interpreter','Latex');
 ylabel('CDF','Interpreter','Latex');
-legend({'MMSE (All)','MMSE (DCC)','P-MMSE (DCC)','P-RZF (DCC)','MR (DCC)'},'Interpreter','Latex','Location','SouthEast');
+legend({'MMSE (All)','MMSE (DCC)','P-MMSE (DCC)','P-MMSE (Proposed)','P-RZF (DCC)','MR (DCC)'},'Interpreter','Latex','Location','SouthEast');
 xlim([0 12]);
 
 % Plot Figure 5.6(a)
