@@ -6,101 +6,109 @@
 % Foundations and Trends in Signal Processing: Vol. 14: No. 3-4,
 % pp 162-472. DOI: 10.1561/2000000109
 %
-% This version includes an additional curve corresponding to a
-% proposed DCC scheme based on threshold-based AP selection
-% combined with load balancing.
+% Phiên bản này bổ sung thêm một đường cong cho
+% phương án DCC đề xuất (proposed DCC) dựa trên chọn AP theo ngưỡng
+% (threshold-based AP selection) kết hợp với cân bằng tải (load balancing).
 %
-% To run this script easily:
-% 1) Place this folder and the original "cell-free-book" folder
-%    in the same parent directory.
-% 2) In Matlab, cd into this folder:
+% Cách chạy script này nhanh:
+% 1) Đặt thư mục hiện tại và thư mục "cell-free-book" gốc
+%    trong cùng một thư mục cha.
+% 2) Trong Matlab, cd vào thư mục này:
 %       >> cd IT4922_cellfree_code
 %       >> run('section5_figure4a_6a_proposed.m')
 
-%Empty workspace and close figures
+% Xóa tất cả figure đang mở và biến trong workspace để bắt đầu từ trạng thái sạch
 close all;
 clear;
 
-%Add path to the original code folder (generateSetup, functionComputeSE_uplink, etc.)
+% Thêm đường dẫn tới thư mục code gốc của sách (chứa generateSetup, functionComputeSE_uplink, ...)
 addpath('../cell-free-book/code');
 
 
 %% Define simulation setup
+% Định nghĩa kịch bản mô phỏng (phiên bản giảm kích thước để chạy nhanh)
 
-%Number of Monte-Carlo setups
-nbrOfSetups = 196;
+% Số lượng cấu hình Monte-Carlo (mỗi cấu hình có vị trí AP/UE khác nhau)
+nbrOfSetups = 5;  % Giảm từ 196 để thử nhanh
 
-%Number of channel realizations per setup
-nbrOfRealizations = 1000;
+% Số lượng hiện thực small-scale fading trên mỗi cấu hình
+nbrOfRealizations = 50;  % Giảm từ 1000 để thử nhanh
 
-%Number of APs 
-L = 400;
+% Số lượng AP trong mạng (mỗi AP có 1 anten)
+L = 100;  % Giảm từ 400 để thử nhanh
 
-%Number of antennas per AP
+% Số anten trên mỗi AP
 N = 1;
 
-%Number of UEs in the network
-K = 40;
+% Số lượng UE trong mạng
+K = 20;  % Giảm từ 40 để thử nhanh
 
-%Length of coherence block
+% Độ dài coherence block (symbol)
 tau_c = 200;
 
-%Length of pilot sequences
+% Độ dài pilot (symbol)
 tau_p = 10;
 
-%Angular standard deviation in the local scattering model (in radians)
-ASD_varphi = deg2rad(15);  %azimuth angle
-ASD_theta = deg2rad(15);   %elevation angle
+% Độ lệch chuẩn góc (local scattering) theo radian
+ASD_varphi = deg2rad(15);  % góc phương vị (azimuth)
+ASD_theta = deg2rad(15);   % góc phương thăng (elevation)
 
 %% Parameters for proposed DCC scheme (threshold + load balancing)
-threshold_ratio = 0.1;  % 10% of max gain per UE
-L_max = 8;              % Max number of UEs per AP
-N_min = 3;              % Min number of APs per UE
+% Các tham số điều khiển thuật toán chọn AP theo ngưỡng và cân bằng tải
+threshold_ratio = 0.1;  % Ngưỡng = 10% so với gain lớn nhất của mỗi UE
+L_max = 8;              % Mỗi AP phục vụ tối đa 8 UE
+N_min = 3;              % Mỗi UE phải có ít nhất 3 AP phục vụ
 
 
 %% Propagation parameters
 
-%Total uplink transmit power per UE (mW)
+% Công suất phát uplink của mỗi UE (mW)
 p = 100;
 
-%Prepare to save simulation results
-SE_MMSE_original = zeros(K,nbrOfSetups); %MMSE (All)
-SE_MMSE_DCC = zeros(K,nbrOfSetups); %MMSE (DCC)
-SE_PMMSE_DCC = zeros(K,nbrOfSetups); %P-MMSE(DCC)
-SE_PRZF_DCC = zeros(K,nbrOfSetups); %P-RZF (DCC)
-SE_MR_DCC = zeros(K,nbrOfSetups); %MR (DCC)
+% Khởi tạo các ma trận lưu SE (K x nbrOfSetups) cho từng scheme
+% MMSE (All APs), MMSE/P-MMSE/P-RZF/MR (DCC gốc), và Proposed DCC
+SE_MMSE_original = zeros(K,nbrOfSetups); % MMSE (All)
+SE_MMSE_DCC = zeros(K,nbrOfSetups);      % MMSE (DCC)
+SE_PMMSE_DCC = zeros(K,nbrOfSetups);     % P-MMSE (DCC)
+SE_PRZF_DCC = zeros(K,nbrOfSetups);      % P-RZF (DCC)
+SE_MR_DCC = zeros(K,nbrOfSetups);        % MR (DCC)
 
-% Proposed DCC (threshold + load balancing)
-SE_PMMSE_PROPOSED = zeros(K,nbrOfSetups);       %P-MMSE (Proposed DCC)
-SE_nopt_LPMMSE_PROPOSED = zeros(K,nbrOfSetups); %n-opt LSFD, LP-MMSE (Proposed DCC)
+% SE cho phương án DCC đề xuất (threshold + load balancing)
+SE_PMMSE_PROPOSED = zeros(K,nbrOfSetups);       % P-MMSE (Proposed DCC)
+SE_nopt_LPMMSE_PROPOSED = zeros(K,nbrOfSetups); % n-opt LSFD, LP-MMSE (Proposed DCC)
 
-SE_opt_LMMSE_original = zeros(K,nbrOfSetups); %opt LSFD, L-MMSE (All)
-SE_opt_LMMSE_DCC = zeros(K,nbrOfSetups); %opt LSFD, L-MMSE (DCC)
-SE_nopt_LPMMSE_DCC = zeros(K,nbrOfSetups); %n-opt LSFD, LP-MMSE (DCC)
-SE_nopt_MR_DCC = zeros(K,nbrOfSetups); %n-opt LSFD, MR (DCC)
+% SE cho phương án DCC dựa trên clustering (affinity clustering)
+SE_PMMSE_CLUSTERING = zeros(K,nbrOfSetups);       % P-MMSE (Clustering DCC)
+SE_nopt_LPMMSE_CLUSTERING = zeros(K,nbrOfSetups); % n-opt LSFD, LP-MMSE (Clustering DCC)
+
+% SE cho các scheme LSFD + L-MMSE/LP-MMSE/MR
+SE_opt_LMMSE_original = zeros(K,nbrOfSetups); % opt LSFD, L-MMSE (All)
+SE_opt_LMMSE_DCC = zeros(K,nbrOfSetups);      % opt LSFD, L-MMSE (DCC)
+SE_nopt_LPMMSE_DCC = zeros(K,nbrOfSetups);    % n-opt LSFD, LP-MMSE (DCC)
+SE_nopt_MR_DCC = zeros(K,nbrOfSetups);        % n-opt LSFD, MR (DCC)
 
 
 %% Go through all setups
 for n = 1:nbrOfSetups
     
-    %Display simulation progress
+    % In tiến độ mô phỏng để biết đang ở setup thứ mấy
     disp(['Setup ' num2str(n) ' out of ' num2str(nbrOfSetups)]);
     
-    %Generate one setup with UEs and APs at random locations
+    % Sinh một cấu hình: vị trí AP/UE ngẫu nhiên, large-scale fading, pilot, D (DCC gốc)
     [gainOverNoisedB,R,pilotIndex,D,D_small] = generateSetup(L,K,N,tau_p,1,0,ASD_varphi,ASD_theta);
     
-    %Generate channel realizations with estimates and estimation
-    %error correlation matrices
+    % Sinh các hiện thực kênh small-scale + ước lượng kênh (Hhat), kênh thật (H),
+    % và covariance của ước lượng/sai số (B,C)
     [Hhat,H,B,C] = functionChannelEstimates(R,nbrOfRealizations,L,K,N,tau_p,pilotIndex,p);
     
     %% Original Cell-Free Massive MIMO
     
-    %Define the case when all APs serve all UEs
+    % Trường hợp lý tưởng: mọi AP phục vụ mọi UE
     D_all = ones(L,K);
     
     
-    %Compute SE using combiners and results in Section 5 for centralized
-    %and distributed uplink operations for the case when all APs serve all UEs
+    % Tính SE (uplink) cho nhiều scheme: MMSE, P-MMSE, P-RZF, MR, LSFD...
+    % khi D_all = 1 (All APs serve all UEs)
     [SE_MMSE_all, SE_P_MMSE_all, SE_P_RZF_all, SE_MR_cent_all, ...
         SE_opt_L_MMSE_all,SE_nopt_LP_MMSE_all, SE_nopt_MR_all, ...
         SE_L_MMSE_all, SE_LP_MMSE_all, SE_MR_dist_all, ...
@@ -108,14 +116,13 @@ for n = 1:nbrOfSetups
         SE_small_MMSE_all, Gen_SE_small_MMSE_all] ...
         = functionComputeSE_uplink(Hhat,H,D_all,D_small,B,C,tau_c,tau_p,nbrOfRealizations,N,K,L,p,R,pilotIndex);
     
-    %Save SE values for "MMSE (All)" and "opt LSFD, L-MMSE (All)"
+    % Lưu hai đường cần vẽ: MMSE (All) và opt LSFD, L-MMSE (All)
     SE_MMSE_original(:,n) = SE_MMSE_all;
     SE_opt_LMMSE_original(:,n) = SE_opt_L_MMSE_all;
     
     %% Cell-Free Massive MIMO with DCC (original scheme)
     
-    %Compute SE using combiners and results in Section 5 for centralized
-    %and distributed uplink operations for DCC
+    % Tính SE cho DCC gốc (ma trận D từ generateSetup)
     [SE_MMSE, SE_P_MMSE, SE_P_RZF, SE_MR_cent, ...
         SE_opt_L_MMSE,SE_nopt_LP_MMSE, SE_nopt_MR, ...
         SE_L_MMSE, SE_LP_MMSE, SE_MR_dist, ...
@@ -123,9 +130,7 @@ for n = 1:nbrOfSetups
         SE_small_MMSE, Gen_SE_small_MMSE] ...
         = functionComputeSE_uplink(Hhat,H,D,D_small,B,C,tau_c,tau_p,nbrOfRealizations,N,K,L,p,R,pilotIndex);
     
-    %Save SE values for "MMSE (DCC)", "P-MMSE (DCC)", "P-RZF (DCC)", "MR (DCC)",
-    %"opt LSFD, L-MMSE (DCC)", "n-opt LSFD, LP-MMSE (DCC)", and 
-    %"n-opt LSFD, MR(DCC)"
+    % Lưu SE cho các scheme chính dưới DCC gốc
     SE_MMSE_DCC(:,n) =  SE_MMSE;
     SE_PMMSE_DCC(:,n) = SE_P_MMSE;
     SE_PRZF_DCC(:,n) = SE_P_RZF;
@@ -135,14 +140,14 @@ for n = 1:nbrOfSetups
     SE_nopt_MR_DCC(:,n) =  SE_nopt_MR;
     
     %% Cell-Free Massive MIMO with proposed DCC (threshold + load balancing)
-    % Use large-scale fading (or gainOverNoisedB) of the single setup (n)
+    % Lấy large-scale fading (gainOverNoisedB) 2D của setup hiện tại
     gainOverNoisedB_2D = gainOverNoisedB(:,:,1); % L x K
     
-    % Generate DCC matrix according to proposed scheme
+    % Sinh ma trận D đề xuất: threshold + load balancing
     D_proposed = functionGenerateDCC_improved(gainOverNoisedB_2D, L, K, ...
         threshold_ratio, L_max, N_min);
     
-    % Compute SE for proposed DCC using the same functionComputeSE_uplink
+    % Tính SE cho D_proposed (chỉ lấy P-MMSE và n-opt LSFD, LP-MMSE)
     [~, SE_P_MMSE_prop, ~, ~, ...
         ~, SE_nopt_LP_MMSE_prop, ~, ...
         ~, ~, ~, ...
@@ -153,14 +158,30 @@ for n = 1:nbrOfSetups
     SE_PMMSE_PROPOSED(:,n) = SE_P_MMSE_prop;
     SE_nopt_LPMMSE_PROPOSED(:,n) = SE_nopt_LP_MMSE_prop;
     
-    %Remove large matrices at the end of analyzing this setup
+    %% Cell-Free Massive MIMO with clustering-based DCC (affinity clustering)
+    % Sinh ma trận D dựa trên clustering UE theo gain vector
+    [D_cluster, ~] = functionGenerateDCC_clustering(gainOverNoisedB_2D, L, K, ...
+        'L_max', L_max, 'N_min', N_min, 'targetClusterSize', 5, 'topM', 6);
+    
+    % Tính SE cho D_cluster (chỉ lấy P-MMSE và n-opt LSFD, LP-MMSE)
+    [~, SE_P_MMSE_clust, ~, ~, ...
+        ~, SE_nopt_LP_MMSE_clust, ~, ...
+        ~, ~, ~, ...
+        ~, ~, ~, ~, ~, ~] ...
+        = functionComputeSE_uplink(Hhat,H,D_cluster,D_small,B,C,tau_c,...
+        tau_p,nbrOfRealizations,N,K,L,p,R,pilotIndex);
+    
+    SE_PMMSE_CLUSTERING(:,n) = SE_P_MMSE_clust;
+    SE_nopt_LPMMSE_CLUSTERING(:,n) = SE_nopt_LP_MMSE_clust;
+    
+    % Giải phóng bộ nhớ lớn trước khi sang setup kế
     clear Hhat H B C R;
     
 end
 
 
 %% Plot simulation results
-% Plot Figure 5.4(a)
+% Plot Figure 5.4(a) - so sánh All, DCC gốc, và DCC đề xuất (đường xanh)
 figure;
 hold on; box on;
 set(gca,'fontsize',16);
@@ -169,16 +190,19 @@ plot(sort(SE_MMSE_original(:)),linspace(0,1,K*nbrOfSetups),'k-','LineWidth',2);
 plot(sort(SE_MMSE_DCC(:)),linspace(0,1,K*nbrOfSetups),'r-.','LineWidth',2);
 plot(sort(SE_PMMSE_DCC(:)),linspace(0,1,K*nbrOfSetups),'k:','LineWidth',2);
 plot(sort(SE_PMMSE_PROPOSED(:)),linspace(0,1,K*nbrOfSetups),'g-','LineWidth',2);
+plot(sort(SE_PMMSE_CLUSTERING(:)),linspace(0,1,K*nbrOfSetups),'m-','LineWidth',2);
 plot(sort(SE_PRZF_DCC(:)),linspace(0,1,K*nbrOfSetups),'b--','LineWidth',2);
 plot(sort(SE_MR_DCC(:)),linspace(0,1,K*nbrOfSetups),'k:','LineWidth',3);
 
 xlabel('Spectral efficiency [bit/s/Hz]','Interpreter','Latex');
 ylabel('CDF','Interpreter','Latex');
-legend({'MMSE (All)','MMSE (DCC)','P-MMSE (DCC)','P-MMSE (Proposed)','P-RZF (DCC)','MR (DCC)'},...
+legend({'MMSE (All)','MMSE (DCC)','P-MMSE (DCC)','P-MMSE (Proposed)','P-MMSE (Clustering)','P-RZF (DCC)','MR (DCC)'},...
     'Interpreter','Latex','Location','SouthEast');
 xlim([0 12]);
+saveas(gcf, 'figure5_4a.png');
+disp('Saved figure5_4a.png');
 
-% Plot Figure 5.6(a) (unchanged compared to original script)
+% Plot Figure 5.6(a) - phần LSFD giữ nguyên so với script gốc
 figure;
 hold on; box on;
 set(gca,'fontsize',16);
@@ -194,4 +218,6 @@ legend({'opt LSFD, L-MMSE (All)','opt LSFD, L-MMSE (DCC)',...
     'n-opt LSFD, LP-MMSE (DCC)','n-opt LSFD, MR (DCC)'},...
     'Interpreter','Latex','Location','SouthEast');
 xlim([0 12]);
+saveas(gcf, 'figure5_6a.png');
+disp('Saved figure5_6a.png');
 

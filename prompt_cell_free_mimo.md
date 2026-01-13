@@ -112,20 +112,22 @@ Liệt kê 10-15 câu hỏi mà giáo viên có thể hỏi khi bảo vệ, kèm
 
 #### Lý do chọn phương pháp này:
 
-| Tiêu chí | Đánh giá |
-|----------|----------|
-| **Độ khó triển khai** | ⭐⭐ (Thấp) - Không cần machine learning |
-| **Yêu cầu toán học** | ⭐⭐⭐ (Trung bình) - Tối ưu hóa đơn giản |
-| **Khả năng mô phỏng** | ⭐⭐⭐⭐⭐ (Cao) - Dễ code MATLAB/Python |
-| **Tính mới** | ⭐⭐⭐ (Khá) - Kết hợp 2 yếu tố |
-| **Thực tế** | ⭐⭐⭐⭐⭐ (Cao) - Áp dụng được ngay |
+| Tiêu chí                      | Đánh giá                                      |
+| ------------------------------- | ------------------------------------------------ |
+| **Độ khó triển khai** | ⭐⭐ (Thấp) - Không cần machine learning      |
+| **Yêu cầu toán học**  | ⭐⭐⭐ (Trung bình) - Tối ưu hóa đơn giản |
+| **Khả năng mô phỏng** | ⭐⭐⭐⭐⭐ (Cao) - Dễ code MATLAB/Python        |
+| **Tính mới**            | ⭐⭐⭐ (Khá) - Kết hợp 2 yếu tố             |
+| **Thực tế**             | ⭐⭐⭐⭐⭐ (Cao) - Áp dụng được ngay        |
 
 ---
 
 ### Mô tả phương pháp đề xuất:
 
 #### Ý tưởng chính:
+
 Kết hợp **threshold-based selection** (chọn AP dựa trên ngưỡng large-scale fading) với **load balancing** (cân bằng tải giữa các AP) để:
+
 1. Đảm bảo mỗi UE được phục vụ bởi các AP có chất lượng kênh tốt
 2. Tránh tình trạng một số AP bị quá tải trong khi AP khác nhàn rỗi
 3. Cải thiện fairness giữa các UE trong mạng
@@ -188,6 +190,7 @@ Kết hợp **threshold-based selection** (chọn AP dựa trên ngưỡng large
 ### Mô phỏng cần thực hiện:
 
 #### Các baseline để so sánh:
+
 1. **All-AP serving**: Tất cả M AP phục vụ tất cả K UE
 2. **Fixed N-nearest**: Mỗi UE được phục vụ bởi N AP gần nhất (cố định)
 3. **LLSF (Largest Large-Scale Fading)**: Chọn N AP có β_mk lớn nhất
@@ -195,43 +198,44 @@ Kết hợp **threshold-based selection** (chọn AP dựa trên ngưỡng large
 
 #### Các đồ thị cần vẽ:
 
-| STT | Đồ thị | Trục X | Trục Y |
-|-----|--------|--------|--------|
-| 1 | CDF của SE | Spectral Efficiency (bit/s/Hz) | CDF |
-| 2 | Average SE vs số AP | Số AP (M) | Average SE |
-| 3 | 95%-likely SE (Fairness) | Phương pháp | SE tại percentile 5% |
-| 4 | Fronthaul load | Phương pháp | Số kết nối AP-UE trung bình |
-| 5 | SE vs Threshold η | Threshold coefficient η | Average SE |
+| STT | Đồ thị                | Trục X                        | Trục Y                         |
+| --- | ------------------------ | ------------------------------ | ------------------------------- |
+| 1   | CDF của SE              | Spectral Efficiency (bit/s/Hz) | CDF                             |
+| 2   | Average SE vs số AP     | Số AP (M)                     | Average SE                      |
+| 3   | 95%-likely SE (Fairness) | Phương pháp                 | SE tại percentile 5%           |
+| 4   | Fronthaul load           | Phương pháp                 | Số kết nối AP-UE trung bình |
+| 5   | SE vs Threshold η       | Threshold coefficient η       | Average SE                      |
 
 ---
 
 ### Tham số mô phỏng đề xuất:
 
-| Tham số | Giá trị | Mô tả |
-|---------|---------|-------|
-| M | 100 | Số Access Points |
-| K | 40 | Số User Equipments |
-| N | 4 | Số antenna mỗi AP |
-| τ_p | 10 | Số pilot sequences |
-| Diện tích | 1 km × 1 km | Vùng phủ sóng |
-| L_max | 15 | Tải tối đa mỗi AP |
-| η | [0.05, 0.1, 0.2, 0.3] | Threshold coefficient |
-| N_min | 3 | Số AP tối thiểu mỗi UE |
+| Tham số    | Giá trị             | Mô tả                    |
+| ----------- | --------------------- | -------------------------- |
+| M           | 100                   | Số Access Points          |
+| K           | 40                    | Số User Equipments        |
+| N           | 4                     | Số antenna mỗi AP        |
+| τ_p        | 10                    | Số pilot sequences        |
+| Diện tích | 1 km × 1 km          | Vùng phủ sóng           |
+| L_max       | 15                    | Tải tối đa mỗi AP      |
+| η          | [0.05, 0.1, 0.2, 0.3] | Threshold coefficient      |
+| N_min       | 3                     | Số AP tối thiểu mỗi UE |
 
 ---
 
 ## 📚 TÀI LIỆU THAM KHẢO
 
-1. **Sách chính**: 
+1. **Sách chính**:
+
    - Emil Björnson, Luca Sanguinetti, *"Foundations of User-Centric Cell-Free Massive MIMO"*, 2024
    - Link: https://github.com/emilbjornson/cell-free-book
-
 2. **Các chương quan trọng trong sách**:
+
    - Chapter 2: System Model
    - Chapter 5: Scalable Cell-Free Massive MIMO (quan trọng nhất)
    - Chapter 6: Downlink Spectral Efficiency
-
 3. **Code mô phỏng tham khảo**:
+
    - MATLAB code từ GitHub của tác giả
    - Figure 5.4, 5.8 (Uplink SE)
    - Figure 6.3, 6.5 (Downlink SE)
