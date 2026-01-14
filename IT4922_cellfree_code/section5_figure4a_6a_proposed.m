@@ -202,7 +202,7 @@ xlim([0 12]);
 saveas(gcf, 'figure5_4a.png');
 disp('Saved figure5_4a.png');
 
-% Plot Figure 5.6(a) - phần LSFD giữ nguyên so với script gốc
+% Plot Figure 5.6(a) - LSFD schemes bao gồm cả Threshold và Clustering
 figure;
 hold on; box on;
 set(gca,'fontsize',16);
@@ -210,12 +210,15 @@ set(gca,'fontsize',16);
 plot(sort(SE_opt_LMMSE_original(:)),linspace(0,1,K*nbrOfSetups),'k-','LineWidth',2);
 plot(sort(SE_opt_LMMSE_DCC(:)),linspace(0,1,K*nbrOfSetups),'r-.','LineWidth',2);
 plot(sort(SE_nopt_LPMMSE_DCC(:)),linspace(0,1,K*nbrOfSetups),'k:','LineWidth',2);
+plot(sort(SE_nopt_LPMMSE_PROPOSED(:)),linspace(0,1,K*nbrOfSetups),'g-','LineWidth',2);
+plot(sort(SE_nopt_LPMMSE_CLUSTERING(:)),linspace(0,1,K*nbrOfSetups),'m-','LineWidth',2);
 plot(sort(SE_nopt_MR_DCC(:)),linspace(0,1,K*nbrOfSetups),'b--','LineWidth',2);
 
 xlabel('Spectral efficiency [bit/s/Hz]','Interpreter','Latex');
 ylabel('CDF','Interpreter','Latex');
 legend({'opt LSFD, L-MMSE (All)','opt LSFD, L-MMSE (DCC)',...
-    'n-opt LSFD, LP-MMSE (DCC)','n-opt LSFD, MR (DCC)'},...
+    'n-opt LSFD, LP-MMSE (DCC)','n-opt LSFD, LP-MMSE (Threshold)',...
+    'n-opt LSFD, LP-MMSE (Clustering)','n-opt LSFD, MR (DCC)'},...
     'Interpreter','Latex','Location','SouthEast');
 xlim([0 12]);
 saveas(gcf, 'figure5_6a.png');
