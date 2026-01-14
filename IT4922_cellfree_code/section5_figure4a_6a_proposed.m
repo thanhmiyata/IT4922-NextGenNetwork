@@ -29,7 +29,7 @@ addpath('../cell-free-book/code');
 % Định nghĩa kịch bản mô phỏng (phiên bản giảm kích thước để chạy nhanh)
 
 % Số lượng cấu hình Monte-Carlo (mỗi cấu hình có vị trí AP/UE khác nhau)
-nbrOfSetups = 5;  % Giảm từ 196 để thử nhanh
+nbrOfSetups = 20;  % Giảm từ 196 để thử nhanh
 
 % Số lượng hiện thực small-scale fading trên mỗi cấu hình
 nbrOfRealizations = 50;  % Giảm từ 1000 để thử nhanh
@@ -196,7 +196,7 @@ plot(sort(SE_MR_DCC(:)),linspace(0,1,K*nbrOfSetups),'k:','LineWidth',3);
 
 xlabel('Spectral efficiency [bit/s/Hz]','Interpreter','Latex');
 ylabel('CDF','Interpreter','Latex');
-legend({'MMSE (All)','MMSE (DCC)','P-MMSE (DCC)','P-MMSE (Proposed)','P-MMSE (Clustering)','P-RZF (DCC)','MR (DCC)'},...
+legend({'MMSE (All)','MMSE (DCC)','P-MMSE (DCC)','P-MMSE (Threshold)','P-MMSE (Clustering)','P-RZF (DCC)','MR (DCC)'},...
     'Interpreter','Latex','Location','SouthEast');
 xlim([0 12]);
 saveas(gcf, 'figure5_4a.png');

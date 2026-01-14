@@ -20,24 +20,27 @@
 close all;
 clear;
 
+% Thêm đường dẫn tới thư mục code gốc của sách
+addpath('../cell-free-book/code');
+
 
 %% Define simulation setup
 % Thiết lập kịch bản mô phỏng theo đúng cấu hình trong sách
 
 % Số lượng cấu hình Monte-Carlo (bố trí khác nhau của AP/UE)
-nbrOfSetups = 196;
+nbrOfSetups = 20;  % Giảm từ 196 để balance giữa tốc độ và độ tin cậy
 
 % Số lượng hiện thực small-scale fading trên mỗi cấu hình
-nbrOfRealizations = 1000;
+nbrOfRealizations = 50;  % Giảm từ 1000 để chạy nhanh hơn
 
 % Số lượng AP trong mạng
-L = 400;
+L = 100;  % Giảm từ 400 để chạy nhanh hơn
 
 % Số anten trên mỗi AP
 N = 1;
 
 % Số lượng UE trong mạng
-K = 40;
+K = 20;  % Giảm từ 40 để chạy nhanh hơn
 
 % Độ dài coherence block
 tau_c = 200;
@@ -185,7 +188,7 @@ plot(sort(SE_MR_DCC(:)),linspace(0,1,K*nbrOfSetups),'k:','LineWidth',3);
 
 xlabel('Spectral efficiency [bit/s/Hz]','Interpreter','Latex');
 ylabel('CDF','Interpreter','Latex');
-legend({'MMSE (All)','MMSE (DCC)','P-MMSE (DCC)','P-MMSE (Proposed)','P-MMSE (Clustering)','P-RZF (DCC)','MR (DCC)'},'Interpreter','Latex','Location','SouthEast');
+legend({'MMSE (All)','MMSE (DCC)','P-MMSE (DCC)','P-MMSE (Threshold)','P-MMSE (Clustering)','P-RZF (DCC)','MR (DCC)'},'Interpreter','Latex','Location','SouthEast');
 xlim([0 12]);
 
 % Plot Figure 5.6(a)

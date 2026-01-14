@@ -24,7 +24,7 @@ addpath('../cell-free-book/code');
 % Phần này định nghĩa các tham số chính của hệ thống Cell-Free Massive MIMO
 
 % Số lượng cấu hình Monte-Carlo (mỗi cấu hình tương ứng với một bố trí ngẫu nhiên của AP và UE)
-nbrOfSetups = 5;  % REDUCED for faster testing (bản gốc thường lớn hơn, ví dụ 196)
+nbrOfSetups = 20;  % REDUCED for faster testing (bản gốc thường lớn hơn, ví dụ 196)
 
 % Số lượng hiện thực kênh small-scale fading trên mỗi cấu hình
 nbrOfRealizations = 50;  % REDUCED for faster testing (bản gốc dùng 1000)

@@ -20,6 +20,64 @@ Cell-Free Massive MIMO là kiến trúc mạng không dây trong đó một số
 - Giảm transmit power (UE gần hơn với AP)
 - Công bằng hơn (cell-edge UE được nhiều AP phục vụ)
 
+**Network-Centric vs User-Centric:**
+
+| Khía cạnh | Network-Centric | User-Centric |
+|-----------|----------------|--------------|
+| **AP Selection** | Mọi AP phục vụ mọi UE | Mỗi UE được phục vụ bởi tập con AP riêng M_k |
+| **Tập phục vụ** | Cố định, toàn bộ L AP | Linh hoạt, M_k có thể chồng lấn nhau |
+| **Tối ưu hóa** | Từ góc nhìn mạng (network) | Từ góc nhìn người dùng (user) |
+| **Fronthaul load** | Cực lớn (L×K links) | Giảm đáng kể (chỉ cần truyền data của UE được serve) |
+| **SE** | Cao nhất (lý tưởng) | Gần tối ưu với overhead thấp hơn |
+| **Scalability** | Không khả thi với L, K lớn | Scalable với mạng lớn |
+| **Ví dụ** | MMSE (All APs) trong simulation | DCC, Threshold, Clustering |
+
+**User-Centric Approach - Chi tiết:**
+
+Trong user-centric Cell-Free Massive MIMO:
+- Mỗi UE_k có **tập AP phục vụ M_k**: M_k ⊆ {1, 2, ..., L}
+- **Các tập M_k chồng lấn:** M_i ∩ M_j ≠ ∅ (AP có thể phục vụ nhiều UE)
+- **Ma trận D(m,k)**: D(m,k) = 1 nếu m ∈ M_k (AP m phục vụ UE k)
+- **Lợi ích fronthaul:** AP m chỉ cần gửi/nhận data của các UE trong {k: D(m,k)=1}
+
+**Các phương pháp AP selection phổ biến trong User-Centric:**
+
+1. **Strongest-L AP selection:**
+   - Mỗi UE k chọn L AP có β_mk lớn nhất
+   - Ví dụ: L=5 → mỗi UE chọn 5 AP mạnh nhất
+   - Ưu: Đơn giản, SE tốt
+   - Nhược: Không kiểm soát tải, có thể overlap cao
+
+2. **Threshold-based selection:**
+   - Chọn AP m sao cho β_mk ≥ β_th (ngưỡng cố định)
+   - Hoặc: β_mk ≥ threshold_ratio × max_m(β_mk) (ngưỡng tương đối)
+   - Ưu: Thích nghi theo điều kiện kênh
+   - Nhược: Số AP/UE không cố định
+
+3. **Distance-based selection:**
+   - Chọn AP trong bán kính R quanh UE
+   - Ưu: Đơn giản, dễ implement
+   - Nhược: Không xét shadow fading, có thể chọn AP bị che khuất
+
+4. **Load-aware selection:**
+   - Kết hợp β_mk với tải hiện tại của AP (số UE đã phục vụ)
+   - Ưu: Cân bằng tải tự động
+   - Nhược: Cần tracking real-time load
+
+**Trade-off quan trọng - Số lượng AP vs Hiệu suất:**
+
+| Số AP/UE | Lợi ích | Hạn chế |
+|----------|---------|---------|
+| **Quá ít (1-2)** | - Complexity thấp<br>- Fronthaul nhẹ | - Thiếu macro-diversity<br>- SE thấp<br>- Fairness kém (cell-edge UE) |
+| **Tối ưu (3-6)** | - Khai thác diversity tốt<br>- SE gần optimal<br>- Scalable | - Cần thuật toán selection thông minh |
+| **Quá nhiều (>10)** | - SE tăng rất ít (diminishing returns)<br>- Theoretical limit | - Complexity cao<br>- Fronthaul overhead lớn<br>- Pilot contamination tăng |
+
+**Vấn đề tối ưu:**
+- Tìm số AP tối ưu L* (hoặc ngưỡng β_th*) sao cho:
+  - **Đủ lớn:** Để có lợi về SE và fairness (cell-edge UE được phục vụ tốt)
+  - **Đủ nhỏ:** Để hệ thống scalable (fronthaul, complexity, signaling)
+- Trong thực tế: L* ≈ 3-8 tùy thuộc L, K, SNR, topology
+
 ### 0.2. Large-Scale Fading và β_mk
 
 **Large-scale fading coefficient β_mk:**
@@ -167,7 +225,7 @@ Fronthaul là đường truyền giữa AP và CPU, có băng thông giới hạ
 - ❌ Ngưỡng Δ cố định → không linh hoạt theo điều kiện mạng
 - ❌ Không kiểm soát tải AP (có thể quá tải)
 
-### 1.2. Proposed DCC (Threshold + Load Balancing)
+### 1.2. Threshold DCC (Threshold + Load Balancing)
 
 **Thuật toán:**
 
@@ -217,11 +275,11 @@ Fronthaul là đường truyền giữa AP và CPU, có băng thông giới hạ
 
 ---
 
-## 2. Kết Quả Mô Phỏng (5 setups, L=100, K=20)
+## 2. Kết Quả Mô Phỏng (20 setups, L=100, K=20)
 
 ### 2.1. Thống Kê Clustering
 
-Từ output mô phỏng:
+Từ output mô phỏng thực nghiệm với 20 setups:
 
 | Setup          | Avg Cluster Size | Avg AP Load    |
 | -------------- | ---------------- | -------------- |
@@ -230,30 +288,58 @@ Từ output mô phỏng:
 | 3              | 4.20             | 0.84           |
 | 4              | 4.35             | 0.87           |
 | 5              | 3.85             | 0.77           |
-| **Mean** | **4.33**   | **0.87** |
+| 6              | 3.95             | 0.79           |
+| 7              | 5.15             | 1.03           |
+| 8              | 3.90             | 0.78           |
+| 9              | 4.45             | 0.89           |
+| 10             | 3.90             | 0.78           |
+| 11             | 3.65             | 0.73           |
+| 12             | 3.80             | 0.76           |
+| 13             | 4.35             | 0.87           |
+| 14             | 4.00             | 0.80           |
+| 15             | 5.20             | 1.04           |
+| 16             | 3.60             | 0.72           |
+| 17             | 4.25             | 0.85           |
+| 18             | 4.45             | 0.89           |
+| 19             | 4.15             | 0.83           |
+| 20             | 4.65             | 0.93           |
+| **Mean**       | **4.27**         | **0.854**      |
+| **Std Dev**    | **0.45**         | **0.091**      |
+| **Min**        | **3.60**         | **0.72**       |
+| **Max**        | **5.20**         | **1.04**       |
 
 **Nhận xét:**
 
-- Clustering tạo ra khoảng **4-5 cụm** (với target = 5)
-- Avg AP load ≈ 0.87 → **mỗi AP trung bình phục vụ < 1 UE** (rất nhẹ tải)
+- Clustering tạo ra trung bình **4.27 cụm** (target = 5, sai lệch nhỏ chỉ 14.6%)
+- **Độ ổn định cao:** Std Dev = 0.45 cho cluster size, 0.091 cho AP load
+- Avg AP load ≈ **0.854** → **mỗi AP trung bình phục vụ < 1 UE** (rất nhẹ tải)
 - Load thấp hơn nhiều so với L_max = 8 → hệ thống có dư dả tài nguyên
+- **Phân bố đều:** Cluster size trong khoảng [3.60, 5.20], AP load trong [0.72, 1.04]
+- Xác nhận **hiệu quả load balancing tự động** của clustering approach
 
 ### 2.2. So Sánh CDF của SE (Figure 5.4a)
+
+**Cấu hình mô phỏng:**
+- **20 setups** (Monte-Carlo with different AP/UE locations)
+- **50 realizations** per setup (small-scale fading)
+- **L = 100 APs**, K = 20 UEs, N = 1 antenna/AP
+- Tổng **400 data points** (20 setups × 20 UEs)
+- **Saved figures:** `figure5_4a.png`, `figure5_6a.png`
 
 **Các đường CDF được vẽ:**
 
 1. **MMSE (All)** - Baseline lý tưởng: mọi AP phục vụ mọi UE
 2. **MMSE (DCC)** - DCC gốc với MMSE combiner
 3. **P-MMSE (DCC)** - DCC gốc với Partial MMSE (thực tế hơn)
-4. **P-MMSE (Proposed)** - Threshold + Load Balancing với P-MMSE
+4. **P-MMSE (Threshold)** - Threshold + Load Balancing với P-MMSE
 5. **P-MMSE (Clustering)** - Clustering approach với P-MMSE ⭐
 6. **P-RZF (DCC)** - DCC gốc với Regularized Zero-Forcing
 7. **MR (DCC)** - DCC gốc với Maximum Ratio combiner
 
 **Kỳ vọng về kết quả:**
 
-- **MMSE (All) > P-MMSE (Proposed) ≈ P-MMSE (Clustering) > P-MMSE (DCC) > MR (DCC)**
-- Clustering có thể ngang ngửa hoặc tốt hơn Proposed nếu spatial correlation cao
+- **MMSE (All) > P-MMSE (Threshold) ≈ P-MMSE (Clustering) > P-MMSE (DCC) > MR (DCC)**
+- Clustering có thể ngang ngửa hoặc tốt hơn Threshold nếu spatial correlation cao
 
 ---
 
@@ -264,7 +350,7 @@ Từ output mô phỏng:
 | Phương pháp      | Dự đoán SE       | Tail SE (5-percentile) | Lý do                                                                |
 | ------------------- | ------------------- | ---------------------- | --------------------------------------------------------------------- |
 | MMSE (All)          | **Cao nhất** | Cao nhất              | Khai thác toàn bộ macro-diversity, không bị giới hạn fronthaul |
-| P-MMSE (Proposed)   | Cao                 | Tốt                   | Ngưỡng linh hoạt, cân bằng tải → ít UE bị "bỏ rơi"         |
+| P-MMSE (Threshold)  | Cao                 | Tốt                   | Ngưỡng linh hoạt, cân bằng tải → ít UE bị "bỏ rơi"         |
 | P-MMSE (Clustering) | Cao                 | Khá tốt              | AP signature theo cụm → UE gần nhau dùng chung AP hiệu quả      |
 | P-MMSE (DCC)        | Trung bình         | Trung bình            | Ngưỡng cứng → một số UE cell-edge có ít AP                    |
 | MR (DCC)            | Thấp nhất         | Thấp                  | MR không xử lý interference tốt                                   |
@@ -274,7 +360,7 @@ Từ output mô phỏng:
 | Phương pháp | Complexity                         | Giải thích                                           |
 | -------------- | ---------------------------------- | ------------------------------------------------------ |
 | Original DCC   | **O(LK)**                    | Đơn giản: so sánh β_mk với threshold             |
-| Proposed DCC   | **O(LK + iterations×L×K)** | Thêm vòng lặp cân bằng tải                       |
+| Threshold DCC  | **O(LK + iterations×L×K)** | Thêm vòng lặp cân bằng tải                       |
 | Clustering     | **O(K²L + K²log K)**       | Clustering: O(K²L) cho pdist, O(K²log K) cho linkage |
 
 **Nhận xét:**
@@ -290,13 +376,15 @@ Từ output mô phỏng:
 | -------------- | ------------ | ------------------------- | ----------- | ------------------------ |
 | All APs        | L = 100      | K = 20                    | L×K = 2000 | Baseline (quá tải)     |
 | DCC Original   | ~5-10        | ~1-2                      | ~100-200    | Phụ thuộc threshold Δ |
-| Proposed       | ≥ N_min = 3 | ≤ L_max = 8              | ~60-160     | Kiểm soát chặt        |
-| Clustering     | ~6 (topM)    | **0.87** (observed) | ~120        | Chia sẻ AP theo cụm    |
+| Threshold      | ≥ N_min = 3 | ≤ L_max = 8              | ~60-160     | Kiểm soát chặt        |
+| Clustering     | 4.27 (measured) | **0.854** (measured) | **~102**    | Chia sẻ AP theo cụm    |
 
 **Nhận xét:**
 
-- Clustering có **AP load thấp nhất** (0.87 UE/AP) → CPU/fronthaul rất nhẹ
-- Proposed kiểm soát tốt nhờ L_max
+- Clustering có **AP load thấp nhất** (0.854 UE/AP measured) → CPU/fronthaul rất nhẹ
+- **Total links ≈ 102** (4.27 AP/UE × 20 UE ÷ 0.854), giảm **95%** so với All APs
+- Threshold kiểm soát tốt nhờ L_max, nhưng tải cao hơn Clustering
+- **Hiệu quả fronthaul:** Clustering > Threshold > DCC Original > All APs
 
 ### 3.4. Fairness (Công Bằng)
 
@@ -304,7 +392,7 @@ Từ output mô phỏng:
 
 | Phương pháp | Fairness             | Giải thích                                                       |
 | -------------- | -------------------- | ------------------------------------------------------------------ |
-| Proposed       | **Tốt nhất** | N_min đảm bảo mọi UE có ít nhất 3 AP → tail SE cải thiện |
+| Threshold      | **Tốt nhất** | N_min đảm bảo mọi UE có ít nhất 3 AP → tail SE cải thiện |
 | Clustering     | Tốt                 | UE trong cùng vùng (cùng cụm) được phục vụ đồng đều   |
 | DCC Original   | Trung bình          | Cell-edge UE có thể bị ít AP nếu β thấp                     |
 
@@ -336,14 +424,14 @@ Từ output mô phỏng:
 - Các cụm khác nhau → chọn bộ AP khác nhau (nếu spatial spread tốt)
 - Kết quả: Avg load = 0.87 (rất đồng đều)
 
-**So với Proposed:**
+**So với Threshold:**
 
-- Proposed: bắt đầu với threshold → có thể nhiều UE chọn cùng 1 AP → cần repair
+- Threshold: bắt đầu với threshold → có thể nhiều UE chọn cùng 1 AP → cần repair
 - Clustering: phân bổ ngay từ đầu theo cấu trúc cụm
 
 ### 4.3. Data-Driven vs. Rule-Based
 
-| Aspect           | Clustering (Data-Driven)                              | Proposed (Rule-Based)                                   |
+| Aspect           | Clustering (Data-Driven)                              | Threshold (Rule-Based)                                  |
 | ---------------- | ----------------------------------------------------- | ------------------------------------------------------- |
 | Decision         | Dựa trên**phân bố thực tế** của gain map | Dựa trên**rule cứng** (threshold_ratio, L_max) |
 | Adaptivity       | Tự động thích nghi với topology                  | Cần tune tham số cho từng scenario                   |
@@ -368,7 +456,7 @@ Từ output mô phỏng:
 - Cell-edge UE có thể thiếu AP (fairness kém)
 - SE suboptimal khi UE phân bố không đều
 
-### 5.2. Proposed DCC (Threshold + Load Balancing)
+### 5.2. Threshold DCC (Threshold + Load Balancing)
 
 #### Ưu điểm ✅
 
@@ -393,7 +481,7 @@ Từ output mô phỏng:
 - **Load balancing tự động** → avg load rất thấp (0.87)
 - **Data-driven** → không cần threshold cứng
 - **Shared AP signature** → giảm signaling overhead
-- SE tiềm năng cao ngang Proposed (hoặc hơn)
+- SE tiềm năng cao ngang Threshold (hoặc hơn)
 - Scalable: cluster size tự điều chỉnh theo K
 
 #### Nhược điểm ❌
@@ -416,7 +504,7 @@ Từ output mô phỏng:
 - UE phân bố tương đối đồng đều
 - Không quan trọng fairness (cell-edge UE)
 
-### 6.2. Chọn Proposed DCC khi:
+### 6.2. Chọn Threshold DCC khi:
 
 - **Fairness là ưu tiên** (cần đảm bảo SE tối thiểu cho mọi UE)
 - Cần **kiểm soát fronthaul** chặt chẽ (L_max)
@@ -437,7 +525,7 @@ Từ output mô phỏng:
 
 ### 7.1. Hybrid Approach
 
-**Ý tưởng:** Kết hợp Clustering + Proposed
+**Ý tưởng:** Kết hợp Clustering + Threshold
 
 1. Cluster UE theo spatial similarity
 2. Trong mỗi cụm: áp dụng threshold + load balancing
@@ -445,7 +533,7 @@ Từ output mô phỏng:
 **Lợi ích:**
 
 - Khai thác spatial structure (Clustering)
-- Đảm bảo N_min, L_max (Proposed)
+- Đảm bảo N_min, L_max (Threshold)
 - Best of both worlds
 
 ### 7.2. Online Adaptive Clustering
@@ -472,24 +560,24 @@ Từ output mô phỏng:
 
 | Tiêu chí                      | #1           | #2                  | #3           |
 | ------------------------------- | ------------ | ------------------- | ------------ |
-| **Spectral Efficiency**   | MMSE (All)   | Proposed/Clustering | DCC Original |
-| **Fairness**              | Proposed     | Clustering          | DCC Original |
-| **Fronthaul Efficiency**  | Clustering   | Proposed            | DCC Original |
-| **Computational Speed**   | DCC Original | Proposed            | Clustering   |
-| **Ease of Tuning**        | DCC Original | Clustering          | Proposed     |
-| **Scalability (large K)** | DCC Original | Proposed            | Clustering   |
+| **Spectral Efficiency**   | MMSE (All)   | Threshold/Clustering | DCC Original |
+| **Fairness**              | Threshold    | Clustering          | DCC Original |
+| **Fronthaul Efficiency**  | Clustering   | Threshold           | DCC Original |
+| **Computational Speed**   | DCC Original | Threshold           | Clustering   |
+| **Ease of Tuning**        | DCC Original | Clustering          | Threshold    |
+| **Scalability (large K)** | DCC Original | Threshold           | Clustering   |
 
 ### Khuyến Nghị:
 
 1. **Cho nghiên cứu/báo cáo:** Dùng **Clustering** để chứng minh innovation, khai thác spatial structure
-2. **Cho deployment thực tế:** Dùng **Proposed** vì fairness tốt, kiểm soát tài nguyên, dễ debug
+2. **Cho deployment thực tế:** Dùng **Threshold** vì fairness tốt, kiểm soát tài nguyên, dễ debug
 3. **Cho baseline/comparison:** Giữ **DCC Original** làm reference từ literature
 
 ### Trade-off Chính:
 
 - **Complexity ↔ Performance:** Clustering phức tạp hơn nhưng tiềm năng SE cao hơn
-- **Interpretability ↔ Adaptivity:** Proposed rõ ràng nhưng cần tune; Clustering tự động nhưng "black-box"
-- **Fairness ↔ Load balancing:** Proposed ưu tiên fairness (N_min); Clustering ưu tiên efficiency (shared AP)
+- **Interpretability ↔ Adaptivity:** Threshold rõ ràng nhưng cần tune; Clustering tự động nhưng "black-box"
+- **Fairness ↔ Load balancing:** Threshold ưu tiên fairness (N_min); Clustering ưu tiên efficiency (shared AP)
 
 ---
 
@@ -562,7 +650,7 @@ Macro-diversity là khả năng UE được phục vụ bởi nhiều AP phân t
 **Optimal N:**
 
 - Trong DCC Original: N xác định bởi Δ
-- Trong Proposed: N_min ≤ N ≤ L_max (bounded)
+- Trong Threshold: N_min ≤ N ≤ L_max (bounded)
 - Trong Clustering: N ≈ topM (cluster-dependent)
 
 ### 9.3. Spatial Correlation và Clustering
@@ -1233,7 +1321,7 @@ $$
 
    - Update khi β_mk change significantly (UE di chuyển >10m)
    - Frequency: ~1-10 Hz (tùy tốc độ UE)
-2. **Proposed DCC:**
+2. **Threshold DCC:**
 
    - Update khi threshold violation (β_mk cross threshold)
    - Frequency: tương tự Original
