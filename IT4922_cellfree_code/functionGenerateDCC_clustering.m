@@ -41,6 +41,18 @@ function [D_cluster, stats] = functionGenerateDCC_clustering(gainOverNoisedB, L,
 %   - Sử dụng hierarchical clustering trên các vector gain đã chuẩn hóa (không cần training).
 %   - Thực thi ràng buộc N_min cho mỗi UE và giới hạn tải L_max cho mỗi AP bằng greedy repair.
 %   - Yêu cầu Statistics and Machine Learning Toolbox (pdist, linkage, cluster).
+%   
+% CẢNH BÁO VỀ PILOT CONTAMINATION (QUAN TRỌNG):
+%   - Clustering CÓ THỂ gom các UE dùng chung pilot vào cùng cụm
+%   - Khi đó: các UE cùng pilot + cùng bộ AP → pilot contamination CỰC MẠNH
+%   - Hậu quả: SE giảm mạnh hoặc = 0, đặc biệt với LSFD schemes (LP-MMSE, MR)
+%   - Hiện tượng: ~20% UE có SE ≈ 0 trong Figure 5.6a (LSFD)
+%   
+%   GIẢI PHÁP:
+%   1. Pilot-aware clustering: Tránh gom UE cùng pilot vào cùng cụm
+%   2. Sử dụng centralized schemes (P-MMSE) thay vì LSFD khi có clustering
+%   3. Tăng số pilot (τ_p) để giảm pilot reuse
+%   4. Modify distance metric: Thêm penalty cho UE cùng pilot
 %
 % VÍ DỤ SỬ DỤNG:
 %   % Với L=100 AP, K=20 UE, mỗi AP tối đa 8 UE, mỗi UE tối thiểu 3 AP

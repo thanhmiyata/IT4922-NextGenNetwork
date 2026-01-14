@@ -55,9 +55,12 @@ ASD_theta = deg2rad(15);   % góc phương thăng (elevation)
 
 %% Parameters for proposed DCC scheme (threshold + load balancing)
 % Các tham số điều khiển thuật toán chọn AP theo ngưỡng và cân bằng tải
-threshold_ratio = 0.1;  % Ngưỡng = 10% so với gain lớn nhất của mỗi UE
-L_max = 8;              % Mỗi AP phục vụ tối đa 8 UE
-N_min = 3;              % Mỗi UE phải có ít nhất 3 AP phục vụ
+% TRADE-OFF DESIGN: Giảm fronthaul load (ít AP hơn DCC gốc) để đổi lấy SE cao nhất có thể
+% DCC gốc: ~50 AP/UE (pilot-based, 1000 total links)
+% Threshold: ~20 AP/UE (threshold-based, ~400 links = -60% fronthaul)
+threshold_ratio = 0.05;  % Ngưỡng = 5% ~ 13dB (vừa phải, không quá lỏng)
+L_max = 30;              % Mỗi AP phục vụ tối đa 30 UE (cho phép load balancing)
+N_min = 15;              % Mỗi UE có ít nhất 15 AP (đủ diversity, không quá nhiều)
 
 
 %% Propagation parameters
