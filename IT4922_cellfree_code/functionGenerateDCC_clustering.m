@@ -350,4 +350,11 @@ stats.maxLoad = max(loadAP);
 % Ví dụ: iterations = 15 nghĩa là cần 15 vòng để cân bằng tải
 stats.iterations = iter;
 
+% Tổng số links (fronthaul load) = tổng số phần tử = 1 trong ma trận D
+stats.totalLinks = sum(D_cluster(:));
+
+% In thông tin tổng hợp
+fprintf('Proposed DCC: Avg cluster size = %.2f, Avg AP load = %.2f, Total links = %d\n', ...
+    mean(sum(D_cluster, 1)), stats.avgLoad, stats.totalLinks);
+
 end

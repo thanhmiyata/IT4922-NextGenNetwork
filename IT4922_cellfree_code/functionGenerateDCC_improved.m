@@ -135,9 +135,10 @@ function D_new = functionGenerateDCC_improved(gainOverNoisedB, L, K, threshold_r
     % Thống kê đơn giản để quan sát đặc tính cụm AP sau khi chạy thuật toán
     avg_cluster_size = mean(sum(D_new, 1)); % trung bình số AP/UE (|M_k|)
     avg_load = mean(sum(D_new, 2));         % trung bình số UE/AP (load)
+    total_links = sum(D_new(:));            % tổng số links (fronthaul load)
 
-    fprintf('Proposed DCC: Avg cluster size = %.2f, Avg AP load = %.2f\n', ...
-        avg_cluster_size, avg_load);
+    fprintf('Proposed DCC: Avg cluster size = %.2f, Avg AP load = %.2f, Total links = %d\n', ...
+        avg_cluster_size, avg_load, total_links);
 
 end
 

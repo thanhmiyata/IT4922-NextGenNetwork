@@ -90,6 +90,11 @@ SE_opt_LMMSE_DCC = zeros(K,nbrOfSetups);      % opt LSFD, L-MMSE (DCC)
 SE_nopt_LPMMSE_DCC = zeros(K,nbrOfSetups);    % n-opt LSFD, LP-MMSE (DCC)
 SE_nopt_MR_DCC = zeros(K,nbrOfSetups);        % n-opt LSFD, MR (DCC)
 
+% Biến lưu fronthaul load (tổng qua tất cả setups)
+links_all_total = 0;
+links_DCC_total = 0;
+links_threshold_total = 0;
+links_cluster_total = 0;
 
 %% Go through all setups
 for n = 1:nbrOfSetups
@@ -174,13 +179,54 @@ for n = 1:nbrOfSetups
         = functionComputeSE_uplink(Hhat,H,D_cluster,D_small,B,C,tau_c,...
         tau_p,nbrOfRealizations,N,K,L,p,R,pilotIndex);
     
-    SE_PMMSE_CLUSTERING(:,n) = SE_P_MMSE_clust;
+        SE_PMMSE_CLUSTERING(:,n) = SE_P_MMSE_clust;
     SE_nopt_LPMMSE_CLUSTERING(:,n) = SE_nopt_LP_MMSE_clust;
+    
+    %% Tính fronthaul load (số links) cho setup này
+    links_all = sum(D_all(:));
+    links_DCC = sum(D(:));
+    links_threshold = sum(D_proposed(:));
+    links_cluster = sum(D_cluster(:));
+    
+    % Cộng dồn để tính trung bình sau
+    links_all_total = links_all_total + links_all;
+    links_DCC_total = links_DCC_total + links_DCC;
+    links_threshold_total = links_threshold_total + links_threshold;
+    links_cluster_total = links_cluster_total + links_cluster;
+    
+    if n == 1
+        % In kết quả cho setup đầu tiên
+        fprintf('\n=== FRONTHAUL LOAD (Setup %d) ===\n', n);
+        fprintf('Phương pháp    | Total Links | AP/UE | Reduction vs DCC\n');
+        fprintf('---------------|-------------|-------|------------------\n');
+        fprintf('All APs        |    %5d    | %5.1f |      --\n', links_all, links_all/K);
+        fprintf('DCC Gốc        |    %5d    | %5.1f |      0%% (baseline)\n', links_DCC, links_DCC/K);
+        fprintf('Threshold      |    %5d    | %5.1f |    %.1f%%\n', links_threshold, links_threshold/K, 100*(links_DCC-links_threshold)/links_DCC);
+        fprintf('Clustering     |    %5d    | %5.1f |    %.1f%%\n\n', links_cluster, links_cluster/K, 100*(links_DCC-links_cluster)/links_DCC);
+    end
     
     % Giải phóng bộ nhớ lớn trước khi sang setup kế
     clear Hhat H B C R;
     
 end
+
+%% Tính và in fronthaul load trung bình qua tất cả setups
+links_all_avg = links_all_total / nbrOfSetups;
+links_DCC_avg = links_DCC_total / nbrOfSetups;
+links_threshold_avg = links_threshold_total / nbrOfSetups;
+links_cluster_avg = links_cluster_total / nbrOfSetups;
+
+fprintf('\n=== FRONTHAUL LOAD TRUNG BÌNH (%d setups) ===\n', nbrOfSetups);
+fprintf('Phương pháp    | Avg Links | Avg AP/UE | Reduction vs DCC | Chi phí ($1000/link)\n');
+fprintf('---------------|-----------|-----------|------------------|---------------------\n');
+fprintf('All APs        |   %6.1f  |   %5.1f   |       --         |   $%6.0fK\n', links_all_avg, links_all_avg/K, links_all_avg);
+fprintf('DCC Gốc        |   %6.1f  |   %5.1f   |       0%%         |   $%6.0fK (baseline)\n', links_DCC_avg, links_DCC_avg/K, links_DCC_avg);
+fprintf('Threshold      |   %6.1f  |   %5.1f   |     %.1f%%       |   $%6.0fK (tiết kiệm $%.0fK)\n', ...
+    links_threshold_avg, links_threshold_avg/K, 100*(links_DCC_avg-links_threshold_avg)/links_DCC_avg, ...
+    links_threshold_avg, (links_DCC_avg-links_threshold_avg));
+fprintf('Clustering     |   %6.1f  |   %5.1f   |     %.1f%%       |   $%6.0fK (tiết kiệm $%.0fK)\n\n', ...
+    links_cluster_avg, links_cluster_avg/K, 100*(links_DCC_avg-links_cluster_avg)/links_DCC_avg, ...
+    links_cluster_avg, (links_DCC_avg-links_cluster_avg));
 
 
 %% Plot simulation results
