@@ -10,37 +10,50 @@
 % proposed DCC scheme based on threshold-based AP selection
 % combined with load balancing.
 %
-% To run this script easily:
+% To run this script:
 % 1) Place this folder and the original "cell-free-book" folder
-%    in the same parent directory.
-% 2) In Matlab, cd into this folder:
-%       >> cd IT4922_cellfree_code
+%    in the same parent directory (or in /MATLAB Drive/Repositories/)
+% 2) In MATLAB, make sure you are in the correct directory, then:
 %       >> run('section5_figure4a_6a_proposed.m')
+%    OR simply click the "Run" button in MATLAB Editor
+%    DO NOT type: section5_figure4a_6a_proposed (without .m)
 
 %Empty workspace and close figures
 close all;
 clear;
 
 %Add path to the original code folder (generateSetup, functionComputeSE_uplink, etc.)
-addpath('../cell-free-book/code');
+% Try multiple possible paths for different environments
+if isfolder('../cell-free-book/code')
+    addpath('../cell-free-book/code');
+elseif isfolder('/MATLAB Drive/Repositories/cell-free-book/code')
+    addpath('/MATLAB Drive/Repositories/cell-free-book/code');
+elseif isfolder('Repositories/cell-free-book/code')
+    addpath('Repositories/cell-free-book/code');
+else
+    error('Cannot find cell-free-book/code folder. Please check the path.');
+end
+
+%Add current directory to path (for functionGenerateDCC_improved)
+addpath(pwd);
 
 
 %% Define simulation setup
 
 %Number of Monte-Carlo setups
-nbrOfSetups = 196;
+nbrOfSetups = 20; % Đã giảm từ 196 để chạy test nhanh hơn
 
 %Number of channel realizations per setup
-nbrOfRealizations = 1000;
+nbrOfRealizations = 200; % Đã giảm từ 1000
 
 %Number of APs 
-L = 400;
+L = 100; % Đã giảm từ 400
 
 %Number of antennas per AP
 N = 1;
 
 %Number of UEs in the network
-K = 40;
+K = 20; % Đã giảm từ 40
 
 %Length of coherence block
 tau_c = 200;
@@ -178,7 +191,7 @@ legend({'MMSE (All)','MMSE (DCC)','P-MMSE (DCC)','P-MMSE (Proposed)','P-RZF (DCC
     'Interpreter','Latex','Location','SouthEast');
 xlim([0 12]);
 
-% Plot Figure 5.6(a) (unchanged compared to original script)
+% Plot Figure 5.6(a) - Đã cập nhật để hiển thị đường Cải tiến (Proposed)
 figure;
 hold on; box on;
 set(gca,'fontsize',16);
@@ -186,12 +199,15 @@ set(gca,'fontsize',16);
 plot(sort(SE_opt_LMMSE_original(:)),linspace(0,1,K*nbrOfSetups),'k-','LineWidth',2);
 plot(sort(SE_opt_LMMSE_DCC(:)),linspace(0,1,K*nbrOfSetups),'r-.','LineWidth',2);
 plot(sort(SE_nopt_LPMMSE_DCC(:)),linspace(0,1,K*nbrOfSetups),'k:','LineWidth',2);
+
+% --- ĐƯỜNG CẢI TIẾN CỦA BẠN ---
+plot(sort(SE_nopt_LPMMSE_PROPOSED(:)),linspace(0,1,K*nbrOfSetups),'g-','LineWidth',2); 
+
 plot(sort(SE_nopt_MR_DCC(:)),linspace(0,1,K*nbrOfSetups),'b--','LineWidth',2);
 
 xlabel('Spectral efficiency [bit/s/Hz]','Interpreter','Latex');
 ylabel('CDF','Interpreter','Latex');
 legend({'opt LSFD, L-MMSE (All)','opt LSFD, L-MMSE (DCC)',...
-    'n-opt LSFD, LP-MMSE (DCC)','n-opt LSFD, MR (DCC)'},...
+    'n-opt LSFD, LP-MMSE (DCC)', 'n-opt LP-MMSE (Proposed)', 'n-opt LSFD, MR (DCC)'},...
     'Interpreter','Latex','Location','SouthEast');
 xlim([0 12]);
-
