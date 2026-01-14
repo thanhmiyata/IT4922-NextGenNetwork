@@ -79,6 +79,9 @@ SE_nopt_LPMMSE_DCC = zeros(K,nbrOfSetups);    % n-opt LSFD, LP-MMSE (DCC)
 % SE cho non-optimal LSFD + MR trong DCC
 SE_nopt_MR_DCC = zeros(K,nbrOfSetups);        % n-opt LSFD, MR (DCC)
 
+% Biến lưu fronthaul load (tổng qua tất cả setups)
+links_all_total = 0;
+links_DCC_total = 0;
 
 %% Go through all setups
 % Vòng lặp chính trên các cấu hình Monte-Carlo khác nhau (khác nhau về vị trí AP/UE và large-scale fading)
@@ -147,10 +150,37 @@ for n = 1:nbrOfSetups
     SE_nopt_LPMMSE_DCC(:,n) =  SE_nopt_LP_MMSE;
     SE_nopt_MR_DCC(:,n) =  SE_nopt_MR;
     
+    %% Tính fronthaul load (số links) cho setup này
+    links_all = sum(D_all(:));
+    links_DCC = sum(D(:));
+    
+    % Cộng dồn để tính trung bình sau
+    links_all_total = links_all_total + links_all;
+    links_DCC_total = links_DCC_total + links_DCC;
+    
+    if n == 1
+        % In kết quả cho setup đầu tiên
+        fprintf('\n=== FRONTHAUL LOAD (Setup %d) ===\n', n);
+        fprintf('Phương pháp    | Total Links | AP/UE | \n');
+        fprintf('---------------|-------------|-------|\n');
+        fprintf('All APs        |    %5d    | %5.1f |\n', links_all, links_all/K);
+        fprintf('DCC Gốc        |    %5d    | %5.1f |\n\n', links_DCC, links_DCC/K);
+    end
+    
     % Giải phóng bộ nhớ cho các ma trận kênh lớn trước khi chuyển sang setup tiếp theo
     clear Hhat H B C R;
     
 end
+
+%% Tính và in fronthaul load trung bình qua tất cả setups
+links_all_avg = links_all_total / nbrOfSetups;
+links_DCC_avg = links_DCC_total / nbrOfSetups;
+
+fprintf('\n=== FRONTHAUL LOAD TRUNG BÌNH (%d setups) ===\n', nbrOfSetups);
+fprintf('Phương pháp    | Avg Links | Avg AP/UE | Chi phí ($1000/link)\n');
+fprintf('---------------|-----------|-----------|---------------------\n');
+fprintf('All APs        |   %6.1f  |   %5.1f   |   $%6.0fK\n', links_all_avg, links_all_avg/K, links_all_avg);
+fprintf('DCC Gốc        |   %6.1f  |   %5.1f   |   $%6.0fK (baseline)\n\n', links_DCC_avg, links_DCC_avg/K, links_DCC_avg);
 
 
 %% Plot simulation results
