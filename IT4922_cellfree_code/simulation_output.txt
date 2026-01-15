@@ -1,0 +1,19 @@
+
+	Trial License -- for use to evaluate programs for possible purchase as an end-user only.
+
+Setup 1 out of 20
+Proposed DCC: Avg cluster size = 15.40, Avg AP load = 3.08, Total links = 308
+Proposed DCC: Avg cluster size = 15.00, Avg AP load = 3.00, Total links = 300
+
+=== FRONTHAUL LOAD (Setup 1) ===
+Phương pháp    | Total Links | AP/UE | Reduction vs DCC
+---------------|-------------|-------|------------------
+All APs        |     2000    | 100.0 |      --
+DCC Gốc        |     1000    |  50.0 |      0% (baseline)
+Threshold      |      308    |  15.4 |    69.2%
+Clustering     |      300    |  15.0 |    70.0%
+
+Setup 2 out of 20
+Proposed DCC: Avg cluster size = 15.10, Avg AP load = 3.02, Total links = 302
+Proposed DCC: Avg cluster size = 15.00, Avg AP load = 3.00, Total links = 300
+Setup 3 out of 20
