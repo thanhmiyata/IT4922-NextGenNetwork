@@ -77,10 +77,12 @@ SE_PRZF_DCC = zeros(K,nbrOfSetups);      % P-RZF (DCC)
 SE_MR_DCC = zeros(K,nbrOfSetups);        % MR (DCC)
 
 % SE cho phương án DCC đề xuất (threshold + load balancing)
+SE_MMSE_PROPOSED = zeros(K,nbrOfSetups);        % MMSE (Proposed DCC)
 SE_PMMSE_PROPOSED = zeros(K,nbrOfSetups);       % P-MMSE (Proposed DCC)
 SE_nopt_LPMMSE_PROPOSED = zeros(K,nbrOfSetups); % n-opt LSFD, LP-MMSE (Proposed DCC)
 
 % SE cho phương án DCC dựa trên clustering (affinity clustering)
+SE_MMSE_CLUSTERING = zeros(K,nbrOfSetups);        % MMSE (Clustering DCC)
 SE_PMMSE_CLUSTERING = zeros(K,nbrOfSetups);       % P-MMSE (Clustering DCC)
 SE_nopt_LPMMSE_CLUSTERING = zeros(K,nbrOfSetups); % n-opt LSFD, LP-MMSE (Clustering DCC)
 
@@ -155,14 +157,15 @@ for n = 1:nbrOfSetups
     D_proposed = functionGenerateDCC_improved(gainOverNoisedB_2D, L, K, ...
         threshold_ratio, L_max, N_min);
     
-    % Tính SE cho D_proposed (chỉ lấy P-MMSE và n-opt LSFD, LP-MMSE)
-    [~, SE_P_MMSE_prop, ~, ~, ...
+    % Tính SE cho D_proposed
+    [SE_MMSE_prop, SE_P_MMSE_prop, ~, ~, ...
         ~, SE_nopt_LP_MMSE_prop, ~, ...
         ~, ~, ~, ...
         ~, ~, ~, ~, ~, ~] ...
         = functionComputeSE_uplink(Hhat,H,D_proposed,D_small,B,C,tau_c,...
         tau_p,nbrOfRealizations,N,K,L,p,R,pilotIndex);
     
+    SE_MMSE_PROPOSED(:,n) = SE_MMSE_prop;
     SE_PMMSE_PROPOSED(:,n) = SE_P_MMSE_prop;
     SE_nopt_LPMMSE_PROPOSED(:,n) = SE_nopt_LP_MMSE_prop;
     
@@ -171,15 +174,16 @@ for n = 1:nbrOfSetups
     [D_cluster, ~] = functionGenerateDCC_clustering(gainOverNoisedB_2D, L, K, ...
         'L_max', L_max, 'N_min', N_min, 'targetClusterSize', 5, 'topM', 6);
     
-    % Tính SE cho D_cluster (chỉ lấy P-MMSE và n-opt LSFD, LP-MMSE)
-    [~, SE_P_MMSE_clust, ~, ~, ...
+    % Tính SE cho D_cluster
+    [SE_MMSE_clust, SE_P_MMSE_clust, ~, ~, ...
         ~, SE_nopt_LP_MMSE_clust, ~, ...
         ~, ~, ~, ...
         ~, ~, ~, ~, ~, ~] ...
         = functionComputeSE_uplink(Hhat,H,D_cluster,D_small,B,C,tau_c,...
         tau_p,nbrOfRealizations,N,K,L,p,R,pilotIndex);
     
-        SE_PMMSE_CLUSTERING(:,n) = SE_P_MMSE_clust;
+    SE_MMSE_CLUSTERING(:,n) = SE_MMSE_clust;
+    SE_PMMSE_CLUSTERING(:,n) = SE_P_MMSE_clust;
     SE_nopt_LPMMSE_CLUSTERING(:,n) = SE_nopt_LP_MMSE_clust;
     
     %% Tính fronthaul load (số links) cho setup này
@@ -240,12 +244,14 @@ plot(sort(SE_MMSE_DCC(:)),linspace(0,1,K*nbrOfSetups),'r-.','LineWidth',2);
 plot(sort(SE_PMMSE_DCC(:)),linspace(0,1,K*nbrOfSetups),'k:','LineWidth',2);
 plot(sort(SE_PMMSE_PROPOSED(:)),linspace(0,1,K*nbrOfSetups),'g-','LineWidth',2);
 plot(sort(SE_PMMSE_CLUSTERING(:)),linspace(0,1,K*nbrOfSetups),'m-','LineWidth',2);
+plot(sort(SE_MMSE_PROPOSED(:)),linspace(0,1,K*nbrOfSetups),'g-.','LineWidth',2);
+plot(sort(SE_MMSE_CLUSTERING(:)),linspace(0,1,K*nbrOfSetups),'m-.','LineWidth',2);
 plot(sort(SE_PRZF_DCC(:)),linspace(0,1,K*nbrOfSetups),'b--','LineWidth',2);
 plot(sort(SE_MR_DCC(:)),linspace(0,1,K*nbrOfSetups),'k:','LineWidth',3);
 
 xlabel('Spectral efficiency [bit/s/Hz]','Interpreter','Latex');
 ylabel('CDF','Interpreter','Latex');
-legend({'MMSE (All)','MMSE (DCC)','P-MMSE (DCC)','P-MMSE (Threshold)','P-MMSE (Clustering)','P-RZF (DCC)','MR (DCC)'},...
+legend({'MMSE (All)','MMSE (DCC)','P-MMSE (DCC)','P-MMSE (Threshold)','P-MMSE (Clustering)','MMSE (Threshold)','MMSE (Clustering)','P-RZF (DCC)','MR (DCC)'},...
     'Interpreter','Latex','Location','SouthEast');
 xlim([0 12]);
 saveas(gcf, 'figure5_4a.png');

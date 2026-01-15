@@ -508,8 +508,10 @@ Option 2 (Threshold):
 | **Load Balancing** | Clustering (0.854) | DCC (1-2) | Threshold (≤8) |
 
 **Figures tạo ra:**
-- ✅ `figure5_4a.png` - CDF với 7 schemes (P-MMSE, P-RZF, MR)
-- ✅ `figure5_6a.png` - CDF với 6 LSFD schemes (LP-MMSE)
+- ✅ **Figure 5.4a:** CDF với 7 schemes (P-MMSE, P-RZF, MR)
+  ![Figure 5.4a](figure5_4a.png)
+- ✅ **Figure 5.6a:** CDF với 6 LSFD schemes (LP-MMSE)
+  ![Figure 5.6a](figure5_6a.png)
 
 ---
 
@@ -837,7 +839,13 @@ Từ output mô phỏng thực nghiệm với 20 setups:
 - **50 realizations** per setup (small-scale fading)
 - **L = 100 APs**, K = 20 UEs, N = 1 antenna/AP
 - Tổng **400 data points** (20 setups × 20 UEs)
-- **Saved figures:** `figure5_4a.png`, `figure5_6a.png`
+- **Saved figures:**
+
+**Figure 5.4a - SE CDF Comparison:**
+![Figure 5.4a](figure5_4a.png)
+
+**Figure 5.6a - LSFD CDF Comparison:**
+![Figure 5.6a](figure5_6a.png)
 
 **Các đường CDF được vẽ:**
 
@@ -2263,11 +2271,13 @@ topM = 6;                  % APs per cluster signature
 
 **Figures:**
 - `figure5_4a.png` - CDF comparison (7 curves):
+  ![Figure 5.4a](figure5_4a.png)
   - MMSE (All), MMSE (DCC), P-MMSE (DCC)
   - **P-MMSE (Threshold)**, **P-MMSE (Clustering)**
   - P-RZF (DCC), MR (DCC)
 
 - `figure5_6a.png` - LSFD schemes (6 curves):
+  ![Figure 5.6a](figure5_6a.png)
   - opt LSFD L-MMSE (All/DCC)
   - n-opt LSFD LP-MMSE (DCC/**Threshold**/**Clustering**)
   - n-opt LSFD MR (DCC)
