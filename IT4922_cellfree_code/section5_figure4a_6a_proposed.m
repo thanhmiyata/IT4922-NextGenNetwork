@@ -1,23 +1,3 @@
-% This Matlab script is a modified version of section5_figure4a_6a.m
-% used to reproduce Figures 5.4(a) and 5.6(a) in:
-%
-% Ozlem Tugfe Demir, Emil Bjornson and Luca Sanguinetti (2021),
-% "Foundations of User-Centric Cell-Free Massive MIMO", 
-% Foundations and Trends in Signal Processing: Vol. 14: No. 3-4,
-% pp 162-472. DOI: 10.1561/2000000109
-%
-% Phiên bản này bổ sung thêm một đường cong cho
-% phương án DCC đề xuất (proposed DCC) dựa trên chọn AP theo ngưỡng
-% (threshold-based AP selection) kết hợp với cân bằng tải (load balancing).
-%
-% Cách chạy script này nhanh:
-% 1) Đặt thư mục hiện tại và thư mục "cell-free-book" gốc
-%    trong cùng một thư mục cha.
-% 2) Trong Matlab, cd vào thư mục này:
-%       >> cd IT4922_cellfree_code
-%       >> run('section5_figure4a_6a_proposed.m')
-
-% Xóa tất cả figure đang mở và biến trong workspace để bắt đầu từ trạng thái sạch
 close all;
 clear;
 
@@ -149,7 +129,7 @@ for n = 1:nbrOfSetups
     SE_nopt_LPMMSE_DCC(:,n) =  SE_nopt_LP_MMSE;
     SE_nopt_MR_DCC(:,n) =  SE_nopt_MR;
     
-    %% Cell-Free Massive MIMO with proposed DCC (threshold + load balancing)
+    % ***Thuật toán Threshold + load balancing
     % Lấy large-scale fading (gainOverNoisedB) 2D của setup hiện tại
     gainOverNoisedB_2D = gainOverNoisedB(:,:,1); % L x K
     
@@ -169,7 +149,7 @@ for n = 1:nbrOfSetups
     SE_PMMSE_PROPOSED(:,n) = SE_P_MMSE_prop;
     SE_nopt_LPMMSE_PROPOSED(:,n) = SE_nopt_LP_MMSE_prop;
     
-    %% Cell-Free Massive MIMO with clustering-based DCC (affinity clustering)
+    % ***Thuật toán Clustering
     % Sinh ma trận D dựa trên clustering UE theo gain vector
     [D_cluster, ~] = functionGenerateDCC_clustering(gainOverNoisedB_2D, L, K, ...
         'L_max', L_max, 'N_min', N_min, 'targetClusterSize', 5, 'topM', 6);
@@ -221,16 +201,14 @@ links_threshold_avg = links_threshold_total / nbrOfSetups;
 links_cluster_avg = links_cluster_total / nbrOfSetups;
 
 fprintf('\n=== FRONTHAUL LOAD TRUNG BÌNH (%d setups) ===\n', nbrOfSetups);
-fprintf('Phương pháp    | Avg Links | Avg AP/UE | Reduction vs DCC | Chi phí ($1000/link)\n');
-fprintf('---------------|-----------|-----------|------------------|---------------------\n');
-fprintf('All APs        |   %6.1f  |   %5.1f   |       --         |   $%6.0fK\n', links_all_avg, links_all_avg/K, links_all_avg);
-fprintf('DCC Gốc        |   %6.1f  |   %5.1f   |       0%%         |   $%6.0fK (baseline)\n', links_DCC_avg, links_DCC_avg/K, links_DCC_avg);
-fprintf('Threshold      |   %6.1f  |   %5.1f   |     %.1f%%       |   $%6.0fK (tiết kiệm $%.0fK)\n', ...
-    links_threshold_avg, links_threshold_avg/K, 100*(links_DCC_avg-links_threshold_avg)/links_DCC_avg, ...
-    links_threshold_avg, (links_DCC_avg-links_threshold_avg));
-fprintf('Clustering     |   %6.1f  |   %5.1f   |     %.1f%%       |   $%6.0fK (tiết kiệm $%.0fK)\n\n', ...
-    links_cluster_avg, links_cluster_avg/K, 100*(links_DCC_avg-links_cluster_avg)/links_DCC_avg, ...
-    links_cluster_avg, (links_DCC_avg-links_cluster_avg));
+fprintf('Phương pháp    | Avg Links | Avg AP/UE | Reduction vs DCC\n');
+fprintf('---------------|-----------|-----------|------------------\n');
+fprintf('All APs        |   %6.1f  |   %5.1f   |       --\n', links_all_avg, links_all_avg/K);
+fprintf('DCC Gốc        |   %6.1f  |   %5.1f   |       0%% (baseline)\n', links_DCC_avg, links_DCC_avg/K);
+fprintf('Threshold      |   %6.1f  |   %5.1f   |     %.1f%%\n', ...
+    links_threshold_avg, links_threshold_avg/K, 100*(links_DCC_avg-links_threshold_avg)/links_DCC_avg);
+fprintf('Clustering     |   %6.1f  |   %5.1f   |     %.1f%%\n\n', ...
+    links_cluster_avg, links_cluster_avg/K, 100*(links_DCC_avg-links_cluster_avg)/links_DCC_avg);
 
 
 %% Plot simulation results
@@ -278,4 +256,3 @@ legend({'opt LSFD, L-MMSE (All)','opt LSFD, L-MMSE (DCC)',...
 xlim([0 12]);
 saveas(gcf, 'figure5_6a.png');
 disp('Saved figure5_6a.png');
-
