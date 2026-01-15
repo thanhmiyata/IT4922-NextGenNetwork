@@ -22,7 +22,7 @@ function D_new = functionGenerateDCC_improved(gainOverNoisedB, L, K, threshold_r
 % thay thế cho cơ chế DCC dựa trên pilot trong generateSetup.m.
 
 
-    % Kiểm tra sơ bộ kích thước đầu vào (bảo vệ lập trình)
+    % Kiểm tra sơ bộ kích thước đầu vào
     if size(gainOverNoisedB,1) ~= L || size(gainOverNoisedB,2) ~= K
         error('gainOverNoisedB must be of size L x K.');
     end
@@ -31,10 +31,11 @@ function D_new = functionGenerateDCC_improved(gainOverNoisedB, L, K, threshold_r
     D_new = zeros(L, K);
 
     % Đổi gain từ đơn vị dB sang tuyến tính để so sánh/nhân chia dễ hơn
-    gainOverNoise = db2pow(gainOverNoisedB);
+    gainOverNoise = db2pow(gainOverNoisedB);  
 
-    %% PHASE 1: Threshold-based Selection (per UE)
-    % Với mỗi UE, chọn những AP có gain lớn hơn ngưỡng tương đối (threshold_ratio * max gain)
+    %% BƯỚC 1: Threshold-based Selection (Chọn AP theo ngưỡng chất lượng kênh)
+    % Với mỗi UE, chỉ giữ lại các AP có gain kênh đủ lớn so với AP tốt nhất của nó.
+    % Điều này giúp loại bỏ các liên kết yếu, giảm tải cho Fronthaul.
     for k = 1:K
         % Tìm gain lớn nhất giữa tất cả AP với UE k
         max_beta_k = max(gainOverNoise(:, k));
@@ -50,8 +51,9 @@ function D_new = functionGenerateDCC_improved(gainOverNoisedB, L, K, threshold_r
     end
 
 
-    %% PHASE 2: Ensure Minimum Connectivity (N_min APs per UE)
-    % Đảm bảo mỗi UE được ít nhất N_min AP phục vụ
+    %% BƯỚC 2: Ensure Minimum Connectivity (Đảm bảo số lượng kết nối tối thiểu)
+    % Đảm bảo mỗi UE có ít nhất N_min AP phục vụ để duy trì độ ổn định đường truyền.
+    % Nếu bước 1 chọn quá ít AP, ta sẽ lấy thêm các AP tốt nhất còn lại.
     for k = 1:K
         num_serving = sum(D_new(:, k));  % số AP hiện tại đang phục vụ UE k
 
@@ -76,8 +78,9 @@ function D_new = functionGenerateDCC_improved(gainOverNoisedB, L, K, threshold_r
     end
 
 
-    %% PHASE 3: Load Balancing (limit UEs per AP to L_max)
-    % Giai đoạn này giới hạn số UE được phục vụ bởi mỗi AP (<= L_max)
+    %% BƯỚC 3: Load Balancing (Cân bằng tải giữa các AP)
+    % Giới hạn mỗi AP chỉ phục vụ tối đa L_max UE. Nếu AP bị quá tải, ta sẽ 
+    % ngắt kết nối với UE có kênh yếu nhất và thử chuyển UE đó sang AP khác rảnh hơn.
     % bằng cách loại bỏ bớt các liên kết yếu của AP bị quá tải và (nếu có thể)
     % gán lại UE đó cho AP khác ít tải hơn. Dừng sớm nếu mọi AP đã thỏa điều kiện.
     max_iterations = 100;

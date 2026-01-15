@@ -130,7 +130,7 @@ for n = 1:nbrOfSetups
     SE_MMSE_original(:,n) = SE_MMSE_all;
     SE_opt_LMMSE_original(:,n) = SE_opt_L_MMSE_all;
     
-    %% Cell-Free Massive MIMO with DCC (original scheme)
+    %% Thuật toán DCC (original scheme)
     
     % Tính SE cho DCC gốc (ma trận D từ generateSetup)
     [SE_MMSE, SE_P_MMSE, SE_P_RZF, SE_MR_cent, ...
@@ -149,7 +149,7 @@ for n = 1:nbrOfSetups
     SE_nopt_LPMMSE_DCC(:,n) =  SE_nopt_LP_MMSE;
     SE_nopt_MR_DCC(:,n) =  SE_nopt_MR;
     
-    %% Cell-Free Massive MIMO with proposed DCC (threshold + load balancing)
+    %% Thuật toán threshold + load balancing
     % Lấy large-scale fading (gainOverNoisedB) 2D của setup hiện tại
     gainOverNoisedB_2D = gainOverNoisedB(:,:,1); % L x K
     
@@ -169,7 +169,7 @@ for n = 1:nbrOfSetups
     SE_PMMSE_PROPOSED(:,n) = SE_P_MMSE_prop;
     SE_nopt_LPMMSE_PROPOSED(:,n) = SE_nopt_LP_MMSE_prop;
     
-    %% Cell-Free Massive MIMO with clustering-based DCC (affinity clustering)
+    %% Thuật toán clustering-based DCC (affinity clustering)
     % Sinh ma trận D dựa trên clustering UE theo gain vector
     [D_cluster, ~] = functionGenerateDCC_clustering(gainOverNoisedB_2D, L, K, ...
         'L_max', L_max, 'N_min', N_min, 'targetClusterSize', 5, 'topM', 6);
