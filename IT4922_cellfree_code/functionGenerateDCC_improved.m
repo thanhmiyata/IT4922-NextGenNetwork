@@ -1,69 +1,72 @@
 function D_new = functionGenerateDCC_improved(gainOverNoisedB, L, K, threshold_ratio, L_max, N_min)
 %functionGenerateDCC_improved - Threshold-based AP Selection with Load Balancing
 %
-% This function implements an improved Distributed Cell-free Clustering (DCC)
-% based on large-scale fading (or channel gain over noise, in dB) and
-% load balancing constraints.
+% Hàm này cài đặt một thuật toán Distributed Cell-free Clustering (DCC)
+% cải tiến, dựa trên large-scale fading (gain over noise, dB) và ràng buộc
+% cân bằng tải trên các AP.
 %
 % INPUT:
-%   gainOverNoisedB : [L x K] matrix of channel gains (in dB) between
-%                     AP l and UE k, normalized by noise variance
-%   L               : Number of APs
-%   K               : Number of UEs
-%   threshold_ratio : Threshold as a fraction of the maximum gain of each UE
-%                     (e.g., 0.1 = 10% of max gain for that UE)
-%   L_max           : Maximum number of UEs that each AP can serve
-%   N_min           : Minimum number of APs that must serve each UE
+%   gainOverNoisedB : ma trận [L x K] chứa gain kênh (dB) giữa AP l và UE k
+%                     đã chuẩn hóa theo nhiễu
+%   L               : số lượng APs
+%   K               : số lượng UEs
+%   threshold_ratio : ngưỡng dạng tỉ lệ so với gain lớn nhất của mỗi UE
+%                     (vd: 0.1 = 10% max gain của UE đó)
+%   L_max           : số UE tối đa mà mỗi AP được phép phục vụ
+%   N_min           : số AP tối thiểu phải phục vụ mỗi UE
 %
 % OUTPUT:
-%   D_new           : [L x K] DCC matrix, where D_new(l,k)=1 if AP l serves UE k
+%   D_new           : ma trận [L x K] DCC, D_new(l,k)=1 nếu AP l phục vụ UE k
 %
-% This Matlab function was written for educational purposes in the context of
-% studying user-centric Cell-Free Massive MIMO, as an alternative to the
-% pilot-based DCC in generateSetup.m.
+% Hàm này được viết để minh họa ý tưởng user-centric Cell-Free Massive MIMO,
+% thay thế cho cơ chế DCC dựa trên pilot trong generateSetup.m.
 
 
-    % Basic input sanity check (dimensions)
+    % Kiểm tra sơ bộ kích thước đầu vào (bảo vệ lập trình)
     if size(gainOverNoisedB,1) ~= L || size(gainOverNoisedB,2) ~= K
         error('gainOverNoisedB must be of size L x K.');
     end
 
-    % Initialize DCC matrix
+    % Khởi tạo ma trận DCC với tất cả phần tử = 0 (chưa AP nào phục vụ UE nào)
     D_new = zeros(L, K);
 
-    % Convert from dB to linear scale for comparisons
+    % Đổi gain từ đơn vị dB sang tuyến tính để so sánh/nhân chia dễ hơn
     gainOverNoise = db2pow(gainOverNoisedB);
 
     %% PHASE 1: Threshold-based Selection (per UE)
+    % Với mỗi UE, chọn những AP có gain lớn hơn ngưỡng tương đối (threshold_ratio * max gain)
     for k = 1:K
-        % Find maximum gain for UE k
+        % Tìm gain lớn nhất giữa tất cả AP với UE k
         max_beta_k = max(gainOverNoise(:, k));
 
-        % Adaptive threshold for UE k
+        % Ngưỡng động cho UE k
         threshold_k = threshold_ratio * max_beta_k;
 
-        % APs whose gain is above the adaptive threshold
+        % Các AP có gain lớn hơn hoặc bằng ngưỡng -> ứng viên phục vụ UE k
         serving_APs = find(gainOverNoise(:, k) >= threshold_k);
 
+        % Gán các AP này phục vụ UE k
         D_new(serving_APs, k) = 1;
     end
 
 
     %% PHASE 2: Ensure Minimum Connectivity (N_min APs per UE)
+    % Đảm bảo mỗi UE được ít nhất N_min AP phục vụ
     for k = 1:K
-        num_serving = sum(D_new(:, k));
+        num_serving = sum(D_new(:, k));  % số AP hiện tại đang phục vụ UE k
 
         if num_serving < N_min
-            % APs that are not yet serving UE k
+            % Các AP chưa phục vụ UE k
             non_serving = find(D_new(:, k) == 0);
 
             if ~isempty(non_serving)
-                % Sort remaining APs by gain in descending order
+                % Sắp xếp các AP chưa phục vụ theo gain giảm dần
                 [~, sorted_idx] = sort(gainOverNoise(non_serving, k), 'descend');
 
-                % Number of APs to add
+                % Số AP cần thêm để đạt N_min
                 add_count = min(N_min - num_serving, length(non_serving));
 
+                % Thêm lần lượt các AP tốt nhất còn lại cho UE k
                 for i = 1:add_count
                     l_add = non_serving(sorted_idx(i));
                     D_new(l_add, k) = 1;
@@ -74,49 +77,54 @@ function D_new = functionGenerateDCC_improved(gainOverNoisedB, L, K, threshold_r
 
 
     %% PHASE 3: Load Balancing (limit UEs per AP to L_max)
+    % Giai đoạn này giới hạn số UE được phục vụ bởi mỗi AP (<= L_max)
+    % bằng cách loại bỏ bớt các liên kết yếu của AP bị quá tải và (nếu có thể)
+    % gán lại UE đó cho AP khác ít tải hơn. Dừng sớm nếu mọi AP đã thỏa điều kiện.
     max_iterations = 100;
 
     for iter = 1:max_iterations
-        % Compute current load per AP (number of UEs served)
+        % Tính tải hiện tại của từng AP: số UE mà AP đang phục vụ
         load = sum(D_new, 2); % [L x 1]
 
+        % Tìm AP có tải lớn nhất
         [max_load, l_overloaded] = max(load);
 
-        % Check stopping condition: all APs satisfy load <= L_max
+        % Điều kiện dừng: mọi AP đều thỏa load <= L_max
         if max_load <= L_max
             break;
         end
 
-        % UEs currently served by the overloaded AP
+        % Liệt kê các UE hiện đang được AP quá tải này phục vụ
         UEs_at_l = find(D_new(l_overloaded, :) == 1);
 
         if isempty(UEs_at_l)
-            % No UEs served but marked overloaded due to numerical reasons
+            % Không có UE nào nhưng vẫn được đánh dấu quá tải (lỗi số học)
             break;
         end
 
-        % Among those UEs, find the one with the weakest link to this AP
+        % Trong số các UE đó, chọn UE có link yếu nhất tới AP này
         [~, weak_idx] = min(gainOverNoise(l_overloaded, UEs_at_l));
         k_weak = UEs_at_l(weak_idx);
 
-        % Only remove this AP if the UE still has at least N_min serving APs
+        % Chỉ bỏ AP này khỏi UE k nếu UE đó vẫn còn >= N_min AP phục vụ
         if sum(D_new(:, k_weak)) > N_min
+            % Bỏ liên kết AP quá tải với UE có link yếu nhất
             D_new(l_overloaded, k_weak) = 0;
 
-            % Optional: try to add an alternative AP that is not overloaded
-            load = sum(D_new, 2); % recompute after removal
+            % (Tùy chọn) thử gán UE này sang một AP khác không quá tải
+            load = sum(D_new, 2); % tính lại tải sau khi bỏ
             candidate_APs = find(D_new(:, k_weak) == 0 & load < L_max);
 
             if ~isempty(candidate_APs)
-                % Choose the candidate AP with the strongest gain
+                % Chọn AP ứng viên có gain lớn nhất với UE k_weak
                 [~, best_idx] = max(gainOverNoise(candidate_APs, k_weak));
                 l_alt = candidate_APs(best_idx);
                 D_new(l_alt, k_weak) = 1;
             end
 
         else
-            % Cannot remove this AP without violating the N_min constraint
-            % Stop iterations to avoid infinite loop
+            % Không thể bỏ AP này mà vẫn giữ N_min AP cho UE k_weak
+            % Dừng vòng lặp để tránh lặp vô tận
             warning('AP %d remains overloaded; could not fully balance load.', l_overloaded);
             break;
         end
@@ -124,11 +132,13 @@ function D_new = functionGenerateDCC_improved(gainOverNoisedB, L, K, threshold_r
 
 
     %% Simple statistics (printed for debugging/analysis)
-    avg_cluster_size = mean(sum(D_new, 1)); % average |M_k| over UEs
-    avg_load = mean(sum(D_new, 2));         % average load over APs
+    % Thống kê đơn giản để quan sát đặc tính cụm AP sau khi chạy thuật toán
+    avg_cluster_size = mean(sum(D_new, 1)); % trung bình số AP/UE (|M_k|)
+    avg_load = mean(sum(D_new, 2));         % trung bình số UE/AP (load)
+    total_links = sum(D_new(:));            % tổng số links (fronthaul load)
 
-    fprintf('Proposed DCC: Avg cluster size = %.2f, Avg AP load = %.2f\n', ...
-        avg_cluster_size, avg_load);
+    fprintf('Proposed DCC: Avg cluster size = %.2f, Avg AP load = %.2f, Total links = %d\n', ...
+        avg_cluster_size, avg_load, total_links);
 
 end
 
